@@ -222,22 +222,21 @@
     }
 
     function submitPost() {
-      const message = document.getElementById('postMessage').value;
-      const imageInput = document.getElementById('postImages');
-      const files = Array.from(imageInput.files);
+  const message = document.getElementById('postMessage').value;
+  const imageInput = document.getElementById('postImages');
+  const files = Array.from(imageInput.files);
 
-      if (!message.trim() || files.length === 0) {
-        alert("Merci de remplir le message et d’uploader au moins une image.");
-        return;
-      }
+  if (!message.trim() || files.length === 0) {
+    alert("Merci de remplir le message et d’uploader au moins une image.");
+    return;
+  }
 
-      const validFiles = files.filter(f => f.path && typeof f.path === 'string');
-        window.api.preparePost(message, validFiles.map(f => f.path)).then(() => {
+  window.api.preparePost(message, files).then(() => {
+    postPopup.style.display = 'none';
+    logAndRun('index.js');
+  });
+}
 
-        postPopup.style.display = 'none';
-        logAndRun('index.js');
-      });
-    }
 
     function logAndRun(script) {
       consoleBox.innerHTML += `\n▶️ Exécution de ${script}...\n`;

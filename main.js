@@ -5,21 +5,7 @@ const path = require('path');
 
 let win;
 
-function createWindow() {
-  win = new BrowserWindow({
-    width: 900,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-    }
-  });
-
-  win.loadFile('index.html');
-}
-
-app.whenReady().then(createWindow);
-
-// 🔐 Login
+// 📌 Gestionnaire pour mettre à jour les credentials dans .env
 ipcMain.handle('update-env', async (_event, { email, password }) => {
   const envPath = path.join(__dirname, '.env');
   let env = {};
@@ -44,33 +30,51 @@ ipcMain.handle('update-env', async (_event, { email, password }) => {
   fs.writeFileSync(envPath, newEnv);
 });
 
-// 📤 Préparer le post
+// 📤 Préparer le post avec chemin d’images (ancienne méthode)
 ipcMain.handle('prepare-post', async (_event, { message, imagePaths }) => {
-  // 1. Écrire le message dans un fichier temporaire (message.txt)
+  console.log('🖼️ Images reçues (chemins) :', imagePaths);
+
   const msgPath = path.join(__dirname, 'message.txt');
   fs.writeFileSync(msgPath, message);
 
-  // 2. Nettoyer dossier media/
   const mediaDir = path.join(__dirname, 'media');
-  if (fs.existsSync(mediaDir)) {
-    fs.readdirSync(mediaDir).forEach(file => {
-      fs.unlinkSync(path.join(mediaDir, file));
-    });
-  } else {
-    fs.mkdirSync(mediaDir);
-  }
+  if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir);
+  else fs.readdirSync(mediaDir).forEach(file => fs.unlinkSync(path.join(mediaDir, file)));
 
   imagePaths.forEach((srcPath, index) => {
-    if (!srcPath || typeof srcPath !== 'string') return; // ✅ skip les mauvais fichiers
+    if (!srcPath || typeof srcPath !== 'string') return;
     const ext = path.extname(srcPath);
     const dest = path.join(mediaDir, `photo${index + 1}${ext}`);
     fs.copyFileSync(srcPath, dest);
   });
-  
+
+  return true;
 });
 
-// ▶️ Lancer un script
+// 📤 Préparer le post avec buffers (méthode actuelle)
+ipcMain.handle('prepare-post-buffers', async (_event, { message, buffers }) => {
+  console.log('📦 Images reçues (buffers) :', buffers.map(b => b.name));
+
+  const msgPath = path.join(__dirname, 'message.txt');
+  fs.writeFileSync(msgPath, message);
+
+  const mediaDir = path.join(__dirname, 'media');
+  if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir);
+  else fs.readdirSync(mediaDir).forEach(file => fs.unlinkSync(path.join(mediaDir, file)));
+
+  buffers.forEach(({ name, buffer }, index) => {
+    const ext = path.extname(name);
+    const dest = path.join(mediaDir, `photo${index + 1}${ext}`);
+    fs.writeFileSync(dest, Buffer.from(buffer));
+  });
+
+  return true;
+});
+
+// ▶️ Lancer un script externe
 ipcMain.handle('run-script', async (_event, scriptName) => {
+  console.log(`▶️ Lancement du script : ${scriptName}`);
+
   const process = spawn('node', [scriptName]);
 
   process.stdout.on('data', (data) => {
@@ -84,4 +88,36 @@ ipcMain.handle('run-script', async (_event, scriptName) => {
   process.on('close', (code) => {
     win.webContents.send('log', `✅ Script terminé avec code ${code}\n`);
   });
+});
+
+// 🪟 Création de la fenêtre principale
+function createWindow() {
+  win = new BrowserWindow({
+    width: 900,
+    height: 600,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: false,
+      allowRunningInsecureContent: true,
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+
+  win.loadFile('index.html');
+}
+
+// 🟢 Lancement de l’app
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
 });
