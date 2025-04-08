@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Facebook Hack's 🚀</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #2a2f3a;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+    }
+
+    h1 {
+      margin: 30px 0 10px 0;
+      font-size: 32px;
+      font-weight: bold;
+      text-align: center;
+      color: white;
+    }
+
+    .main-container {
+      display: flex;
+      width: 90%;
+      flex: 1;
+      margin-bottom: 10px;
+    }
+
+    .console-box {
+      flex: 1;
+      width: 100%;
+      background-color: #121212;
+      border-radius: 15px;
+      padding: 20px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      font-size: 14px;
+      line-height: 1.4em;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      padding: 20px;
+      background-color: #1f2430;
+      width: 100%;
+      border-top: 1px solid #444;
+    }
+
+    .action-button {
+      width: 270px;
+      height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      border: none;
+      border-radius: 15px;
+      font-weight: bold;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      transition: transform 0.2s ease, background-color 0.3s ease;
+    }
+
+    .action-button:hover {
+      transform: scale(1.05);
+    }
+
+    .login-btn {
+      background-color: #4267B2;
+    }
+
+    .post-btn {
+      background-color: #4267B2;
+    }
+
+    .delete-btn {
+      background-color: #dc3545;
+    }
+
+    .button-title {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .button-emoji {
+      font-size: 24px;
+      margin-top: 10px;
+    }
+
+    #loginPopup, #postPopup {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    #loginPopup > div, #postPopup > div {
+      background-color: #1f2430;
+      padding: 30px;
+      border-radius: 15px;
+      width: 500px;
+      box-shadow: 0 0 15px black;
+      position: relative;
+    }
+
+    #loginPopup input, #postPopup input, #postPopup textarea {
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Facebook Hack's 🚀🤖</h1>
+
+  <div class="main-container">
+    <div class="console-box" id="console">
+      <p style="opacity: 0.5;">Console d'exécution en attente...</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="action-button" style="background-color: transparent; box-shadow: none;">
+      <img src="facebook.png" alt="Facebook logo" style="max-width: 100%; max-height: 100px;">
+    </div>
+
+    <button class="action-button login-btn" onclick="run('login_once.js')">
+      <div class="button-title">Connecter un compte Facebook</div>
+      <div class="button-emoji">✅</div>
+    </button>
+
+    <button class="action-button post-btn" onclick="run('index.js')">
+      <div class="button-title">Publier un nouveau post</div>
+      <div class="button-emoji">📬</div>
+    </button>
+
+    <button class="action-button delete-btn" onclick="run('XXXX')">
+      <div class="button-title">Supprimer les anciens posts</div>
+      <div class="button-emoji">❌</div>
+    </button>
+  </div>
+
+<!-- Pop-up login -->
+<div id="loginPopup">
+    <div style="position: relative;">
+      <button onclick="closeLoginPopup()" style="position: absolute; top: 10px; right: 10px; background: none; color: white; border: none; font-size: 20px; cursor: pointer;">✖</button>
+  
+      <h2 style="color: white;">Connexion Facebook</h2>
+      <label style="color: white;">Email</label>
+      <input id="fbEmail" type="email">
+      <label style="color: white;">Mot de passe</label>
+      <input id="fbPassword" type="password">
+      <button onclick="submitLogin()" style="background-color: #4267B2; color: white; padding: 10px 20px; border: none; border-radius: 10px; font-weight: bold;">Valider</button>
+    </div>
+  </div>
+  
+
+  <!-- Pop-up publication -->
+  <div id="postPopup">
+    <div>
+      <button onclick="closePostPopup()" style="position: absolute; top: 10px; right: 10px; background: none; color: white; border: none; font-size: 20px; cursor: pointer;">✖</button>
+      <h2 style="color: white;">Créer une publication</h2>
+      <label style="color: white;">Message à publier</label>
+      <textarea id="postMessage" rows="6"></textarea>
+      <label style="color: white;">Images à uploader (jpg/png)</label>
+      <input id="postImages" type="file" accept="image/*" multiple>
+      <button onclick="submitPost()" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 10px; font-weight: bold;">Valider</button>
+    </div>
+  </div>
+
+  <script>
+    const consoleBox = document.getElementById('console');
+    const loginPopup = document.getElementById('loginPopup');
+    const postPopup = document.getElementById('postPopup');
+    let pendingScript = null;
+
+    function run(script) {
+      if (script === 'login_once.js') {
+        loginPopup.style.display = 'flex';
+        pendingScript = script;
+      } else if (script === 'index.js') {
+        postPopup.style.display = 'flex';
+      } else {
+        logAndRun(script);
+      }
+    }
+
+    function closePostPopup() {
+      postPopup.style.display = 'none';
+    }
+
+    function submitLogin() {
+      const email = document.getElementById('fbEmail').value;
+      const password = document.getElementById('fbPassword').value;
+
+      if (!email || !password) {
+        alert('Merci de remplir les deux champs.');
+        return;
+      }
+
+      window.api.updateEnv(email, password).then(() => {
+        loginPopup.style.display = 'none';
+        logAndRun('login_once.js');
+      });
+    }
+
+    function submitPost() {
+      const message = document.getElementById('postMessage').value;
+      const imageInput = document.getElementById('postImages');
+      const files = Array.from(imageInput.files);
+
+      if (!message.trim() || files.length === 0) {
+        alert("Merci de remplir le message et d’uploader au moins une image.");
+        return;
+      }
+
+      const validFiles = files.filter(f => f.path && typeof f.path === 'string');
+        window.api.preparePost(message, validFiles.map(f => f.path)).then(() => {
+
+        postPopup.style.display = 'none';
+        logAndRun('index.js');
+      });
+    }
+
+    function logAndRun(script) {
+      consoleBox.innerHTML += `\n▶️ Exécution de ${script}...\n`;
+      window.api.runScript(script);
+    }
+
+    window.api.onLog((data) => {
+      consoleBox.innerHTML += data;
+      consoleBox.scrollTop = consoleBox.scrollHeight;
+    });
+
+    function closeLoginPopup() {
+  loginPopup.style.display = 'none';
+    }
+
+  </script>
+
+</body>
+</html>

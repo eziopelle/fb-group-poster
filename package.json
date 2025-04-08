@@ -1,0 +1,19 @@
+{
+  "name": "fb-group-poster",
+  "version": "1.0.0",
+  "description": "Interface simple pour lancer des scripts Facebook avec Playwright",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Victor Pelle",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "electron": "^35.1.2",
+    "google-spreadsheet": "^3.3.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.51.1"
+  }
+}
