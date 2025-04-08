@@ -1,64 +1,66 @@
-// deleteoldpost.js
 const { chromium } = require('playwright');
 
 (async () => {
-  const browser = await chromium.launch({ headless: false });
-  const context = await browser.newContext({
-    storageState: 'auth.json' // Assure-toi d’avoir un état d’authentification valide
-  });
+  const browser = await chromium.launch({ headless: false, slowMo: 80 });
+  const context = await browser.newContext({ storageState: 'fb-session.json' });
   const page = await context.newPage();
 
-  console.log('Chargement de la page...');
-  await page.goto('https://www.facebook.com/100004076987599/allactivity?activity_history=false&category_key=GROUPPOSTS&manage_mode=false&should_load_landing_page=false', {
+  await page.goto('https://www.facebook.com/100004076987599/allactivity?activity_history=false&category_key=GROUPPOSTS', {
     waitUntil: 'domcontentloaded'
   });
 
-  await page.waitForTimeout(5000); // Laisse Facebook tout charger
+  await page.waitForTimeout(5000);
 
-  // Fonction pour scroller vers le bas pour charger plus d’éléments
-  const scrollToBottom = async () => {
-    await page.evaluate(() => window.scrollBy(0, window.innerHeight));
-    await page.waitForTimeout(2000);
-  };
+  let deletedCount = 0;
 
-  // Fonction principale de suppression
-  const deleteGroupPosts = async () => {
-    let deleted = 0;
-    let tries = 0;
+  const blocks = await page.locator('div:has-text("a publié dans")').elementHandles();
+  console.log(`🔍 ${blocks.length} blocs avec "a publié dans"`);
 
-    while (tries < 30) { // Limite à 30 scrolls
-      const posts = await page.$$('div[role="article"]');
+  for (const block of blocks) {
+    try {
+      const text = await block.innerText();
 
-      for (const post of posts) {
-        const textContent = await post.innerText();
-
-        if (textContent.includes('a publié dans') && !textContent.includes('a commenté')) {
-          try {
-            const menuButton = await post.$('div[aria-label="Actions pour cette activité"]');
-            if (menuButton) await menuButton.click();
-
-            await page.waitForTimeout(500);
-
-            const deleteButton = await page.locator('text=Supprimer').first();
-            if (await deleteButton.isVisible()) {
-              await deleteButton.click();
-              deleted++;
-              console.log(`✅ Publication supprimée (${deleted})`);
-              await page.waitForTimeout(2000);
-            }
-          } catch (err) {
-            console.warn('⚠️ Erreur lors de la suppression :', err);
-          }
-        }
+      if (
+        text.includes('a commenté') ||
+        text.includes('a répondu') ||
+        text.includes('a partagé') ||
+        text.includes('a aimé') ||
+        text.includes('a ajouté') ||
+        text.includes('Historique d’activité') ||
+        text.includes('Publications et commentaires dans des groupes')
+      ) {
+        console.log('⛔ Bloc ignoré (autre type d’activité)');
+        continue;
       }
 
-      await scrollToBottom();
-      tries++;
+      console.log(`🧾 Bloc valide : ${text.split('\n')[0]}`);
+
+      const menuBtn = await block.$('div[aria-label="Options d’action"]');
+      if (!menuBtn) {
+        console.warn('❌ Bouton "…" introuvable dans ce bloc');
+        continue;
+      }
+
+      await menuBtn.click();
+      await page.waitForTimeout(500);
+
+      const deleteBtn = page.locator('div[role="menu"] >> text=Supprimer').first();
+      await deleteBtn.waitFor({ timeout: 4000 });
+      await deleteBtn.click();
+      console.log('🗑️ Clic sur "Supprimer"');
+
+      const confirm = page.locator('div[role="dialog"] >> role=button[name="Supprimer"]');
+      await confirm.waitFor({ timeout: 4000 });
+      await confirm.click();
+      console.log('✅ Supprimé avec succès');
+
+      deletedCount++;
+      await page.waitForTimeout(1500);
+    } catch (err) {
+      console.warn('⚠️ Erreur pendant le traitement d’un bloc :', err.message);
     }
+  }
 
-    console.log(`🎉 ${deleted} publications supprimées.`);
-    await browser.close();
-  };
-
-  await deleteGroupPosts();
+  console.log(`🎉 Fin : ${deletedCount} post(s) supprimé(s)`);
+  await browser.close();
 })();

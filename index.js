@@ -40,7 +40,7 @@ async function handleAllCookiePopups(page) {
       const button = page.locator(`button:has-text("${label}")`);
       if (await button.isVisible({ timeout: 1000 })) {
         await button.click();
-        console.log(`🍪 Bouton cookies cliqué : "${label}"`);
+        console.log(`🍪 Bouton cookies cliqué : ${label}`);
         await page.waitForTimeout(1000);
       }
     } catch (_) {}
@@ -56,13 +56,13 @@ async function handleAllCookiePopups(page) {
   for (const selector of selectors) {
     try {
       const element = page.locator(selector);
-      if (await element.isVisible({ timeout: 1000 })) {
+      if (await element.isVisible({ timeout: 2000 })) {
         await page.evaluate((sel) => {
           const el = document.querySelector(sel);
           if (el) el.remove();
         }, selector);
         console.log(`🧹 Popup supprimé : ${selector}`);
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(700);
       }
     } catch (_) {}
   }
@@ -79,48 +79,69 @@ async function handleAllCookiePopups(page) {
     try {
       console.log(`\n🚀 Accès au groupe : ${GROUP_URL}`);
       await page.goto(GROUP_URL, { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(4000);
       await handleAllCookiePopups(page);
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(4000);
       await handleAllCookiePopups(page);
       await page.screenshot({ path: `screens/group_load_${Date.now()}.png`, fullPage: true });
 
+
       // Ouverture éditeur
       const openEditorButton = page.locator('div[role="button"] span:has-text("Exprimez-vous...")');
-      await openEditorButton.first().click({ timeout: 3000 });
-      await page.waitForTimeout(2000);
+      await openEditorButton.first().click({ timeout: 5000 });
+      await page.waitForTimeout(4000);
       console.log("🖊 Éditeur ouvert.");
 
       // Champ texte avec fallback
-      const editableDiv = page.locator('[contenteditable="true"][aria-label="Créez une publication publique..."]');
-      try {
-        await editableDiv.waitFor({ timeout: 5000 });
-        await editableDiv.click();
-        await page.keyboard.type(MESSAGE, { delay: 10 });
-      } catch {
-        const allEditable = await page.locator('[contenteditable="true"]').elementHandles();
-        for (const el of allEditable) {
-          const visible = await el.isVisible();
-          if (visible) {
-            await page.evaluate((el) => el.focus(), el);
-            await page.waitForTimeout(300);
-            await page.keyboard.type(MESSAGE, { delay: 20 });
-            break;
-          }
-        }
-      }
+// Champ texte avec fallback + gestion des deux variantes
+// Champ texte avec fallback + gestion des deux variantes
+const modal = page.locator('div[role="dialog"]').first();
+await modal.waitFor({ timeout: 5000 });
+
+let editableDiv = null;
+
+const exprimezVous = modal.locator('[contenteditable="true"][aria-label="Exprimez-vous"]').first();
+const creerPublication = modal.locator('[contenteditable="true"][aria-label="Créer une publication publique..."]').first();
+
+if (await exprimezVous.isVisible()) {
+  editableDiv = exprimezVous;
+  console.log("📝 Champ 'Exprimez-vous' détecté");
+} else if (await creerPublication.isVisible()) {
+  editableDiv = creerPublication;
+  console.log("📝 Champ 'Créer une publication publique...' détecté");
+}
+
+if (editableDiv) {
+  try {
+    await editableDiv.click({ force: true });
+    await editableDiv.evaluate(el => el.focus());
+    await page.waitForTimeout(500);
+    await page.keyboard.type(MESSAGE, { delay: 15 });
+  } catch (err) {
+    console.warn("⚠️ Erreur pendant l'écriture, passage au fallback.");
+  }
+} else {
+  console.warn("⚠️ Aucun champ détecté, fallback sur premier contenteditable dans la modale...");
+  const fallback = modal.locator('[contenteditable="true"]').first();
+  await fallback.click({ force: true });
+  await fallback.evaluate(el => el.focus());
+  await page.waitForTimeout(500);
+  await page.keyboard.type(MESSAGE, { delay: 20 });
+}
+
+
 
       // Ajout images
       const imageButton = page.locator('[aria-label="Photo/Vidéo"]');
-      await imageButton.first().click({ timeout: 4000 });
-      await page.waitForTimeout(1000);
+      await imageButton.first().click({ timeout: 5000 });
+      await page.waitForTimeout(2000);
       const fileInput = page.locator('input[type="file"][accept^="image"]');
       await fileInput.setInputFiles(IMAGES);
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(3000);
 
       // Publier
       const publishButton = page.locator('div[aria-label="Publier"]');
-      await publishButton.waitFor({ timeout: 3000 });
+      await publishButton.waitFor({ timeout: 4000 });
       const isDisabled = await publishButton.getAttribute('aria-disabled');
       if (isDisabled !== 'true') {
         await publishButton.click();
@@ -129,10 +150,10 @@ async function handleAllCookiePopups(page) {
         console.warn("⚠️ Bouton Publier désactivé.");
       }
 
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(4000);
     } catch (err) {
-      console.error(`💥 Erreur pour le groupe ${GROUP_URL} :`, err.message);
-      await page.screenshot({ path: `error_${Date.now()}.png`, fullPage: true });
+      console.error(`💥 Erreur pour le groupe ${GROUP_URL} :`, err);
+      await page.screenshot(`{ path: error_${Date.now()}.png, fullPage: true }`);
     }
   }
 
