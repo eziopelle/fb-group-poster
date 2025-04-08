@@ -3,6 +3,12 @@ const { getGroupUrls } = require('./google-sheet'); // 👈 récupère les liens
 require('dotenv').config();
 const { chromium } = require('playwright');
 const path = require('path');
+const required = ['FB_EMAIL', 'FB_PASSWORD', 'GROUP_URL', 'GSHEET_ID', 'GOOGLE_CREDENTIALS_PATH'];
+for (const key of required) {
+  if (!process.env[key]) {
+    console.warn(`⚠️ La variable ${key} est manquante dans le .env`);
+  }
+}
 
 
 const fs = require('fs');

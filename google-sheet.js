@@ -1,8 +1,10 @@
+require('dotenv').config(); // 🥇 Charger .env en premier
 const { GoogleSpreadsheet } = require('google-spreadsheet');
-const creds = require('./google-credentials.json');
-require('dotenv').config();
+const credsPath = process.env.GOOGLE_CREDENTIALS_PATH;
+const creds = require(credsPath);
 
 const SPREADSHEET_ID = process.env.GSHEET_ID;
+
 
 async function getGroupUrls() {
   const doc = new GoogleSpreadsheet(SPREADSHEET_ID);

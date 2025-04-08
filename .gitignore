@@ -1,2 +1,46 @@
+# Node.js
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output
+dist/
+build/
+out/
+
+# Electron
+*.asar
+*.local
+.DS_Store
+*.lock
+*.orig
+
+# Logs
+logs/
+*.log
+
+# Sensitive files
 .env
+.env.*
+*.env
+*.json
+google-credentials.json
+secrets/
+
+# Screenshots and temporary files
+screens/
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Editor folders
+.vscode/
+.idea/
+
+# OS-specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
